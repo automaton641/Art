@@ -66,7 +66,7 @@ public class Canvas extends JComponent {
             	second = 0.0f;
                 third = 0.0f;
             }
-            colors[colorIndex] = new Color(second, third, first);
+            colors[colorIndex] = new Color(third, second, first);
             accumulator += step;
         }
     }
