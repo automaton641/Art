@@ -3,13 +3,15 @@ package automaton641.art;
 import javax.swing.*;
 
 public class App {
-    public static int width = 16;
-    public static int height = 16;
-    public static int cellSize = 16;
-    public static int modulus = 4;
+    public static int size = 128;
+    public static int width = App.size*2;
+    public static int height = App.size;
+    public static int cellSize = 5;
+    public static int tickModulusModulus = 32;
+    public static int modulus = 16;
     public static boolean grey = false;
     public static Canvas canvas;
-    public static int iterationTime = 512;
+    public static int iterationTime = 64;
     public static Automaton automaton;
     public static void main(String[] args) {
         JFrame frame = new JFrame("Art");
