@@ -6,7 +6,10 @@ public class App {
     public static int width = 16;
     public static int height = 16;
     public static int cellSize = 16;
+    public static int modulus = 2;
+    public static boolean grey = false;
     public static Canvas canvas;
+    public static Automaton automaton;
     public static void main(String[] args) {
         JFrame frame = new JFrame("Art");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -16,5 +19,10 @@ public class App {
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.setVisible(true);
+        canvas.fillColors();
+        while (true) {
+            App.canvas.drawAutomaton();
+            App.automaton.iterate();
+        }
     }
 }
