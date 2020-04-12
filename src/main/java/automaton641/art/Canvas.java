@@ -38,6 +38,17 @@ public class Canvas extends JComponent {
         }
         repaint();
     }
+    public void calculateColorsFull() {
+        int modulus = App.modulus;
+        colors = new Color[modulus];
+        float accumulator  = 0.0f;
+        float step = 1.0f / (float) (modulus - 1);
+        for (int colorIndex = 0; colorIndex < modulus; colorIndex++) {
+            int c = (int)(accumulator*0xffffff);
+            colors[colorIndex] = new Color(c|0xff000000);
+            accumulator += step;
+        }
+    }
     public void calculateColors() {
         int modulus = App.modulus;
         colors = new Color[modulus];
@@ -66,7 +77,7 @@ public class Canvas extends JComponent {
             	second = 0.0f;
                 third = 0.0f;
             }
-            colors[colorIndex] = new Color(third, second, first);
+            colors[colorIndex] = new Color(second, third, first);
             accumulator += step;
         }
     }
@@ -99,7 +110,7 @@ public class Canvas extends JComponent {
         if (App.grey) {
             calculateGrayColors();
         } else {
-            calculateColors();
+            calculateColorsFull();
         }
     }
 }

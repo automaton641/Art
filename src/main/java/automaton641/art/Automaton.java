@@ -1,13 +1,39 @@
 package automaton641.art;
+import automaton641.art.DirectionNode.Direction;
 
 public class Automaton {
     public Cell[][] cells;
     public Cell[][] backCells;
+    public DirectionGraph[][] directionGraphs;
+    public Walker walker;
     public Automaton() {
         initializeCells();
+        createDirectionGraph();
+    }
+    public void createDirectionGraph() {
+        directionGraphs = new DirectionGraph[16][8];
+        for (int i = 0; i < directionGraphs.length; i++) {
+            for (int j = 0; j < directionGraphs[i].length; j++) {
+                directionGraphs[i][j] = new DirectionGraph(App.random, 8, 16);
+            }
+        }
+        walker = new Walker(directionGraphs, 0, 0);
+
+        /*directionGraph = new DirectionGraph();
+        directionGraph.addDirection(Direction.DOWN);
+        directionGraph.addDirection(Direction.RIGHT);
+    */
     }
     public Cell getCell(Position position) {
         return cells[position.row][position.column];
+    }
+    public void reset() {
+        for (int row = 0; row < App.height; row++) {
+            for (int column = 0; column < App.width; column++) {
+                cells[row][column].level = 0;
+                cells[row][column].tickPower = 1;
+            }
+        }
     }
     public void initializeCells() {
         cells = new Cell[App.height][App.width];
@@ -16,35 +42,60 @@ public class Automaton {
             for (int column = 0; column < App.width; column++) {
                 cells[row][column] = new Cell();
                 backCells[row][column] = new Cell();
-                cells[row][column].level = 1;
-                cells[row][column].tickModulus = 1;
+                cells[row][column].level = 0;
+                cells[row][column].tickPower = 1;
             }
         }
-        int prevLevel = 1;
+        //cells[0][0].level = App.modulus/2;
+        /*
+        int prevtickModulus = 1;
         for (int row = 0; row < App.height; row++) {
             for (int column = 0; column < App.width; column++) {
                 Position position = new Position(row, column);
                 Cell cell = getCell(position);
-                cell.level += prevLevel;
-                cell.level %= App.modulus;
-                prevLevel = cell.level;
-                cell.tickModulus = column + row;
+                cell.tickModulus += prevtickModulus+row+column;
                 cell.tickModulus %= App.tickModulusModulus;
                 cell.tickModulus++;
+                prevtickModulus = cell.tickModulus;
             }
+        }
+        */
+    }
+    public void tickCell(Cell cell) {
+        try {
+            cell.level += cell.tickPower;
+            boolean shouldReact = false;
+            if (cell.level >= App.modulus) {
+            shouldReact = true;
+            }
+            cell.tickPower++;
+            cell.tickPower%=128;
+            cell.level %= App.modulus;
+            if (shouldReact) {
+                tickCell(getCell(moveDownOffset(walker.position, 1)));
+                tickCell(getCell(moveRightOffset(walker.position, 1)));
+                tickCell(getCell(moveUpOffset(walker.position, 1)));
+                tickCell(getCell(moveLeftOffset(walker.position, 1)));
+            }
+        } catch (Exception exception){
+            exception.printStackTrace();
         }
     }
     public void iterate() {
         //fillBackCells();
+        boolean shouldIterate = true;
+        while (shouldIterate) {
+            Cell walkerCell = getCell(walker.position);
+            tickCell(walkerCell);
+            shouldIterate = walker.move();
+        }
+        Cell walkerCell = getCell(walker.position);
+        //walker.position = moveRightOffset(walker.position, walkerCell.level);
         for (int row = 0; row < App.height; row++) {
             for (int column = 0; column < App.width; column++) {
                 Position position = new Position(row, column);
                 Cell cell = getCell(position);
-                cell.tryTick();
-                if (cell.level == App.modulus-1) {
-                    getCell(moveUpOffset(position, 1)).tryTick();
-                    getCell(moveLeftOffset(position, 1)).tryTick();
-                }
+                tickCell(cell);
             }
         }
         try {
@@ -89,8 +140,8 @@ public class Automaton {
         return moved;
 	}
     public void fillBackCells() {
-        for (int row = 0; row < height; row++) {
-            for (int column = 0; column < width; column++) {
+        for (int row = 0; row < App.height; row++) {
+            for (int column = 0; column < App.width; column++) {
                 backCells[row][column].level = cells[row][column].level;
                 backCells[row][column].tickIndex = cells[row][column].tickIndex;
                 backCells[row][column].tickModulus = cells[row][column].tickModulus;
