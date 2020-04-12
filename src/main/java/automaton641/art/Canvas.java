@@ -110,7 +110,7 @@ public class Canvas extends JComponent {
         if (App.grey) {
             calculateGrayColors();
         } else {
-            calculateColorsFull();
+            calculateColors();
         }
     }
 }

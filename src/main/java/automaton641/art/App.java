@@ -3,27 +3,31 @@ import java.util.Random;
 import javax.sound.sampled.*;
 import java.nio.ByteBuffer;
 import javax.swing.*;
+import java.util.LinkedList;
 
 public class App {
     public static int size = 64;
     public static int width = App.size*2;
     public static int height = App.size;
     public static int cellSize = 10;
-    public static int baseModulus = 256-1;
+    public static int baseModulus = 12;
     public static int modulus = App.baseModulus;
     public static Random random = new Random();
     public static SourceDataLine line;
-
+    public static int tickModulusModulus = 64;
     public static boolean grey = false;
     public static Canvas canvas;
-    public static int iterationTime = 0;
+    public static int iterationTime = 128;
     public static Automaton automaton;
     public static void reset() {
-        automaton.reset();
+        App.automaton.reset();/*
+        App.automaton.iterate();
+        App.canvas.drawAutomaton();
+        */
     }
     public static short getSample(int row, int column) {
 		int value = App.automaton.cells[row][column].level;
-        double sample = (value * 64*2) / (App.modulus-1) - 64;
+        double sample = (value * 128) / (App.modulus-1) - 64;
         //System.out.println(sample);
         return (short)sample;
     }
@@ -54,25 +58,50 @@ public class App {
             System.exit(0);
         }
         App.line.start();
-        int r = 2;
-        ByteBuffer byteBuffer = ByteBuffer.allocate(App.width*App.height*r*2);
+        int r = 1;
+        short[] duple = new short[2];
         while (true) {
             App.canvas.drawAutomaton();
-            App.line.drain();
+            App.automaton.iterate();
+            /*App.line.drain();
             short n;
-            byteBuffer.position(0);
+            int takeSampleIndex = 0;
+            int bufferLength = 0;
+            LinkedList<MyShort> sampleList = new LinkedList<MyShort>();
             for (int i = 0; i < App.height; i++) {
                 for (int j = 0; j < App.width; j++) {
-                    n = App.getSample(i, j);
-                    for (int k = 0; k < r; k++) {
-                        byteBuffer.putShort(n);
+                    duple[takeSampleIndex] = App.getSample(i, j);
+                    if (takeSampleIndex==1){
+                        if (duple[1] > duple[0]) {
+                            double step = ((double)duple[1] - (double)duple[0])/32;
+                            for (double sample = (double)duple[0]; sample < (double)duple[1]; sample+=step) {
+                                MyShort mySample = new MyShort();
+                                mySample.value = (short)sample;
+                                sampleList.add(mySample);
+                                bufferLength+=2;
+                            }
+                        } else {
+                            double step = ((double)duple[0] - (double)duple[1])/32;
+                            for (double sample = (double)duple[0]; sample > (double)duple[1]; sample-=step) {
+                                MyShort mySample = new MyShort();
+                                mySample.value = (short)sample;
+                                sampleList.add(mySample);
+                                bufferLength+=2;
+                            }
+                        }
+                        
+                        duple[0] = duple[1];
+                    } else {
+                        takeSampleIndex++;
+                        takeSampleIndex%=2;
                     }
                 }
             }
-            byte[] bytes = byteBuffer.array();
-            App.line.write(bytes, 0, App.width*App.height*r*2);
-
-            App.automaton.iterate();
+            ByteBuffer byteBuffer = ByteBuffer.allocate(bufferLength);
+            for (MyShort sample : sampleList) {
+                byteBuffer.putShort(sample.value);
+            }
+            App.line.write(byteBuffer.array(), 0, bufferLength);*/
         }
     }
 }

@@ -9,20 +9,23 @@ public class Automaton {
     public Automaton() {
         initializeCells();
         createDirectionGraph();
+        walker = new Walker(directionGraphs, 0, 0);
     }
     public void createDirectionGraph() {
-        directionGraphs = new DirectionGraph[16][8];
+        directionGraphs = new DirectionGraph[16][15];
         for (int i = 0; i < directionGraphs.length; i++) {
             for (int j = 0; j < directionGraphs[i].length; j++) {
-                directionGraphs[i][j] = new DirectionGraph(App.random, 8, 16);
+                directionGraphs[i][j] = new DirectionGraph(App.random, 7, 128);
             }
         }
-        walker = new Walker(directionGraphs, 0, 0);
 
         /*directionGraph = new DirectionGraph();
         directionGraph.addDirection(Direction.DOWN);
         directionGraph.addDirection(Direction.RIGHT);
     */
+    }
+    public Cell getBackCell(Position position) {
+        return backCells[position.row][position.column];
     }
     public Cell getCell(Position position) {
         return cells[position.row][position.column];
@@ -31,9 +34,14 @@ public class Automaton {
         for (int row = 0; row < App.height; row++) {
             for (int column = 0; column < App.width; column++) {
                 cells[row][column].level = 0;
-                cells[row][column].tickPower = 1;
             }
         }
+        cells[App.height/2][App.width/2].level = App.modulus-1;
+        cells[App.height/2][App.width/2-1].level = App.modulus-1;
+        cells[App.height/2-1][App.width/2].level = App.modulus-1;
+        cells[App.height/2-1][App.width/2-1].level = App.modulus-1;
+
+        fillBackCells();
     }
     public void initializeCells() {
         cells = new Cell[App.height][App.width];
@@ -42,11 +50,9 @@ public class Automaton {
             for (int column = 0; column < App.width; column++) {
                 cells[row][column] = new Cell();
                 backCells[row][column] = new Cell();
-                cells[row][column].level = 0;
-                cells[row][column].tickPower = 1;
             }
         }
-        //cells[0][0].level = App.modulus/2;
+        reset();
         /*
         int prevtickModulus = 1;
         for (int row = 0; row < App.height; row++) {
@@ -61,41 +67,103 @@ public class Automaton {
         }
         */
     }
-    public void tickCell(Cell cell) {
+    public void tryToTickCell(Cell cell, Position position, int tickPower, boolean shoudlReplace) {
         try {
-            cell.level += cell.tickPower;
-            boolean shouldReact = false;
-            if (cell.level >= App.modulus) {
-            shouldReact = true;
+            if (shoudlReplace) {
+                cell.level=tickPower;
+            } else {
+                cell.level+=tickPower;
             }
-            cell.tickPower++;
-            cell.tickPower%=128;
             cell.level %= App.modulus;
-            if (shouldReact) {
-                tickCell(getCell(moveDownOffset(walker.position, 1)));
-                tickCell(getCell(moveRightOffset(walker.position, 1)));
-                tickCell(getCell(moveUpOffset(walker.position, 1)));
-                tickCell(getCell(moveLeftOffset(walker.position, 1)));
-            }
+            /*
+            if (cell.level >= App.modulus) {
+                cell.level %= App.modulus;
+                Position reactPosition;
+                Cell reactCell;
+                reactPosition = moveDownOffset(position, 1);
+                reactCell = getCell(reactPosition);
+                cell.level+=reactCell.level;
+                cell.level %= App.modulus;
+                tryToTickCell(reactCell, reactPosition, tickPower/16, false);
+                reactPosition = moveRightOffset(position, 1);
+                reactCell = getCell(reactPosition);
+                cell.level+=reactCell.level;
+                cell.level %= App.modulus;
+                tryToTickCell(reactCell, reactPosition, tickPower/16, false);
+                reactPosition = moveUpOffset(position, 1);
+                reactCell = getCell(reactPosition);
+                cell.level+=reactCell.level;
+                cell.level %= App.modulus;
+                tryToTickCell(reactCell, reactPosition, tickPower/16, false);
+                reactPosition = moveLeftOffset(position, 1);
+                reactCell = getCell(reactPosition);
+                cell.level+=reactCell.level;
+                cell.level %= App.modulus;
+                tryToTickCell(reactCell, reactPosition, tickPower/16, false);
+            }else {
+                cell.level %= App.modulus;
+            }*/
         } catch (Exception exception){
             exception.printStackTrace();
+            System.exit(0);
         }
+    }
+
+    public Cell getDownCell(Position position) {
+        return getCell(moveDownOffset(position,1));
+    }
+    public Cell getRightCell(Position position) {
+        return getCell(moveRightOffset(position,1));
+    }
+    public Cell getLeftCell(Position position) {
+        return getCell(moveLeftOffset(position,1));
+    }
+    public Cell getUpCell(Position position) {
+        return getCell(moveUpOffset(position,1));
+    }
+
+    public Cell getDownBackCell(Position position) {
+        return getBackCell(moveDownOffset(position,1));
+    }
+    public Cell getRightBackCell(Position position) {
+        return getBackCell(moveRightOffset(position,1));
+    }
+    public Cell getLeftBackCell(Position position) {
+        return getBackCell(moveLeftOffset(position,1));
+    }
+    public Cell getUpBackCell(Position position) {
+        return getBackCell(moveUpOffset(position,1));
+    }
+    public void react(Position position) {
+        Cell cell = getCell(position);
+        cell.level+= getDownBackCell(position).level;
+        cell.level %= App.modulus;
+        cell.level+= getRightBackCell(position).level;
+        cell.level %= App.modulus;
+        cell.level+= getLeftBackCell(position).level;
+        cell.level %= App.modulus;
+        cell.level+= getUpBackCell(position).level;
+        cell.level %= App.modulus;
     }
     public void iterate() {
         //fillBackCells();
+        //System.out.println("iteration");
+        /*
         boolean shouldIterate = true;
         while (shouldIterate) {
             Cell walkerCell = getCell(walker.position);
-            tickCell(walkerCell);
+            tryToTickCell(walkerCell, walker.position, walker.directionNode.value, true);
+            //walkerCell.tickModulus();
             shouldIterate = walker.move();
         }
-        Cell walkerCell = getCell(walker.position);
+        //System.out.println("second part");
+*/
         //walker.position = moveRightOffset(walker.position, walkerCell.level);
+        fillBackCells();
         for (int row = 0; row < App.height; row++) {
             for (int column = 0; column < App.width; column++) {
                 Position position = new Position(row, column);
-                Cell cell = getCell(position);
-                tickCell(cell);
+                react(position);
             }
         }
         try {
@@ -143,9 +211,6 @@ public class Automaton {
         for (int row = 0; row < App.height; row++) {
             for (int column = 0; column < App.width; column++) {
                 backCells[row][column].level = cells[row][column].level;
-                backCells[row][column].tickIndex = cells[row][column].tickIndex;
-                backCells[row][column].tickModulus = cells[row][column].tickModulus;
-
             }
         }
     }

@@ -6,7 +6,7 @@ public class Walker {
 	public DirectionNode directionNode;
     public int graphIndex;
     public int graphIndex2;
-    public int graphIterations = 16*2;
+    public int graphIterations = 4;
     public int graphIteration;
 	public Walker(DirectionGraph[][] directionGraphs, int row, int column) {
 		this.position = new Position(row, column);
@@ -55,6 +55,7 @@ public class Walker {
                 graphIteration++;
                 graphIteration %= graphIterations;
                 if ( graphIteration == 0) {
+                    System.out.println("reset");
                     App.reset();
                     graphIndex2++;
                     graphIndex2%= directionGraphs.length;

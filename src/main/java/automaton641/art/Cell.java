@@ -11,6 +11,10 @@ public class Cell {
         level++;
         level %= App.modulus;
     }
+    public void tickModulus() {
+        tickModulus++;
+        tickModulus %= App.tickModulusModulus;
+    }
     public void tryTick() {
         if (tickIndex == tickModulus-1 ){
             tick();
